@@ -10,8 +10,7 @@ I'm assuming that customers are partitioned by key and that no customers are spr
 
 I chose 4 partitions as I ran the application on a single 4-core spark node. It's possible that increasing the number of Kafka partitions would lead to performance improvements, although I didn't carry out any performance testing...
 
-I focused on code readability, succinctness, maintainability, and parallelism. Data accuracy (i.e. that an accurate count
-is kept of failed logins) was also a priorty although I believe I failed to achieve that, as explained below.
+I focused on code readability, succinctness, maintainability, functional-ness, and overall affinity with parallelism. Data accuracy (i.e. that an accurate count is kept of failed logins) was also a priorty although I believe I failed to achieve that, as explained below.
 
 I chose Spark for built-in resilience and scalability, computational speed, and for streaming support. Other options included
 Apache Storm and Flume. Kafka Streaming would likely be an excellent option once it is production ready.
