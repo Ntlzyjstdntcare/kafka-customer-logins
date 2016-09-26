@@ -112,11 +112,11 @@ class FailedLoginsHandler {
     val ssc = new StreamingContext(conf, Seconds(3))
     val failedLoginsCounter = FailedLoginsCounter.getInstance(ssc.sparkContext)
 
-    val kafkaStream: InputDStream[(String, String)] = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,
+    val kafkaInputStream: InputDStream[(String, String)] = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,
       kafkaParams(),
       Set[String](loginsTopic))
 
-    val loginAttemptMessageStream: DStream[LoginAttemptMessage] = kafkaStream.map {
+    val loginAttemptMessageStream: DStream[LoginAttemptMessage] = kafkaInputStream.map {
       case (_, messageValue: String) =>
         extractMessage(messageValue).getOrElse(LoginAttemptMessage("", "", "", true))
     }
