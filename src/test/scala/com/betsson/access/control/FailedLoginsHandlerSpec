@@ -1,0 +1,33 @@
+package com.betsson.access.control
+
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
+import scala.util.Try
+
+class FailedLoginsHandlerSpec extends FlatSpec with Matchers {
+
+  val failedLoginsCounter = new FailedLoginsHandler
+
+  val messageStringTrue = "{\"CustomerId\":\"00002c28-7599-11d1-8028-1cc1dee5ebd\",\"BrandName\":\"TestBrand\"," +
+    "\"Timestamp\":\"2016-05-31T09:05:33.303\",\"IsSuccessful\":true}"
+
+  val messageStringFalse = "{\"CustomerId\":\"00002c28-7599-11d1-8028-1cc1dee5ebd\",\"BrandName\":\"TestBrand\"," +
+    "\"Timestamp\":\"2016-05-31T09:05:33.303\",\"IsSuccessful\":false}"
+
+  val messageTrue = LoginAttemptMessage("00002c28-7599-11d1-8028-1cc1dee5ebd", "BrandName", "2016-05-31T09:05:33.303", true)
+
+  val messageFalse = LoginAttemptMessage("00002c28-7599-11d1-8028-1cc1dee5ebd", "BrandName", "2016-05-31T09:05:33.303", false)
+
+  "extractMessage" should "return a correct Try of LoginAttemptMessage" in {
+    assert(failedLoginsCounter.extractMessage(messageStringTrue) == Try(messageTrue))
+  }
+
+  "loginFailed" should "return false when LoginAttemptMessage contains true" in {
+    assert(failedLoginsCounter.loginFailed(messageTrue) == false)
+  }
+
+  "loginFailed" should "return true when LoginAttemptMessage contains false" in {
+    assert(failedLoginsCounter.loginFailed(messageFalse) == true)
+  }
+}
