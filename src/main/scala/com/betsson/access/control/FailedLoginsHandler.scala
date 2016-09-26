@@ -105,7 +105,7 @@ class FailedLoginsHandler {
 
     val failureMessageList: List[JsValue] = List(LoginFailuresMessage(message.CustomerId, consecutiveFailuresEventName, message.Timestamp).toJson)
     val failureMessageRDD: RDD[JsValue] = ssc.sparkContext.parallelize(failureMessageList)
-    failureMessageRDD.writeToKafka(producerConfig, s => new ProducerRecord(failuresTopic, s))
+    failureMessageRDD.writeToKafka(producerConfig, message => new ProducerRecord(failuresTopic, message))
   }
 
   def createContext(): StreamingContext = {
