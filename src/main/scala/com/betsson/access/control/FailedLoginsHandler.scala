@@ -87,14 +87,14 @@ class FailedLoginsHandler {
     }
   }
 
-  def checkFailures(message: LoginAttemptMessage, accumulator: Accumulator[Long]): Unit = {
+  def checkFailures(ssc: StreamingContext, message: LoginAttemptMessage, accumulator: Accumulator[Long]): Unit = {
     val consecutiveFailures = accumulator.value
     if (consecutiveFailures != 0 && consecutiveFailures % 2 == 0) {
-      sendFailuresMessage(message)
+      sendFailuresMessage(ssc, message)
     }
   }
 
-  def sendFailuresMessage(message: LoginAttemptMessage): Unit = {
+  def sendFailuresMessage(ssc: StreamingContext, message: LoginAttemptMessage): Unit = {
     val producerConfig = {
       val p = new Properties()
       p.setProperty("bootstrap.servers", "127.0.0.1:9092")
@@ -128,7 +128,7 @@ class FailedLoginsHandler {
             case true => if (lastValueFailure == false) lastValueFailure = true else failedLoginsCounter += 1
             case false => lastValueFailure = false
           }
-          checkFailures(message, failedLoginsCounter)
+          checkFailures(ssc, message, failedLoginsCounter)
       }})
 
     ssc.checkpoint(s3Bucket)
