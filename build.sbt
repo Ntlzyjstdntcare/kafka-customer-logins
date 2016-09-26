@@ -16,8 +16,8 @@ libraryDependencies ++= {
     "org.apache.spark"            %% "spark-core"                     % sparkVersion % "provided",
     "org.apache.spark"            %% "spark-streaming"                % sparkVersion % "provided",
     "org.apache.spark"            %% "spark-streaming-kafka"          % sparkVersion,
-    "org.scalatest"               % "scalatest_2.11"                  % "3.0.0"      % "test",
     "io.spray"                    %% "spray-json"                     % "1.3.2",
+    "org.scalatest"               % "scalatest_2.11"                  % "3.0.0"      % "test",
     "com.github.benfradet"        % "spark-kafka-writer_2.11"         % "0.1.0"
   )
 }
