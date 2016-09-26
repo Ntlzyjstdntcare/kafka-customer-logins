@@ -1,5 +1,6 @@
 package com.betsson.access.control
 
+import _root_.kafka.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -44,6 +45,14 @@ object FailedLoginsHandler {
       "zookeeper.connection.timeout.ms" -> "10000",
       "auto.offset.reset" -> "smallest"
     )
+  }
+
+  val producerConfig = {
+    val p = new Properties()
+    p.setProperty("bootstrap.servers", "127.0.0.1:9092")
+    p.setProperty("key.serializer", classOf[StringSerializer].getName)
+    p.setProperty("value.serializer", classOf[StringSerializer].getName)
+    p
   }
 }
 
@@ -95,14 +104,6 @@ class FailedLoginsHandler {
   }
 
   def sendFailuresMessage(ssc: StreamingContext, message: LoginAttemptMessage): Unit = {
-    val producerConfig = {
-      val p = new Properties()
-      p.setProperty("bootstrap.servers", "127.0.0.1:9092")
-      p.setProperty("key.serializer", classOf[StringSerializer].getName)
-      p.setProperty("value.serializer", classOf[StringSerializer].getName)
-      p
-    }
-
     val failureMessageList: List[JsValue] = List(LoginFailuresMessage(message.CustomerId, consecutiveFailuresEventName, message.Timestamp).toJson)
     val failureMessageRDD: RDD[JsValue] = ssc.sparkContext.parallelize(failureMessageList)
     failureMessageRDD.writeToKafka(producerConfig, message => new ProducerRecord(failuresTopic, message))
