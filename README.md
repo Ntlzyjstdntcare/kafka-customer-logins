@@ -1,12 +1,22 @@
+Here is how I setup the project:
+
 Using Kafka 2.11-0.10.0.0.
+
 Using the quick and dirty zookeeper that comes packaged with kafka.
+
 Starting 3-broker kafka cluster with default configs.
+
 Creating topics called CustomerLogins and ConsumerTopic with 4 partitions and replication factor of 3.
+
 Created new spark streaming application using Spark 2.0.0.
+
 Use sbt assembly to build, with sbt version 0.13.12.
 
 I'm assuming that input messages are valid json.
+
 I'm assuming that customers are partitioned by key and that no customers are spread across partitions.
+
+The project itself:
 
 I chose 4 partitions as I ran the application on a single 4-core spark node. It's possible that increasing the number of Kafka partitions would lead to performance improvements, although I didn't carry out any performance testing...
 
