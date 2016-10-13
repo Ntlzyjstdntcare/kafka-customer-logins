@@ -49,7 +49,7 @@ object FailedLoginsHandler {
   }
 }
 
-class FailedLoginsHandler extends Serializable /*with LoginsJsonProtocol*/ {
+class FailedLoginsHandler extends Serializable {
   @transient
   val conf = new SparkConf().setMaster("local[2]").setAppName("FailedLoginsHandler")
 
@@ -67,7 +67,6 @@ class FailedLoginsHandler extends Serializable /*with LoginsJsonProtocol*/ {
   println("Starting application\n\n\n\n\n\n\n\n\n")
 
   def start(termination: Int = 0) {
-    @transient
     val ssc = createContext()
 
     ssc.start()
@@ -103,7 +102,6 @@ class FailedLoginsHandler extends Serializable /*with LoginsJsonProtocol*/ {
   }
 
   def createContext(): StreamingContext = {
-    @transient
     val ssc = new StreamingContext(conf, Seconds(3))
     var failedLoginsCounter = 0
 
