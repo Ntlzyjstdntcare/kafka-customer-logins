@@ -1,6 +1,5 @@
 package com.betsson.access.control
 
-import _root_.kafka.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -22,12 +21,6 @@ import scala.collection.immutable.Map
 
 case class LoginAttemptMessage(CustomerId: String, BrandName: String, Timestamp: String, IsSuccessful: Boolean)
 case class LoginFailuresMessage(CustomerId: String, EventName: String, TimeStamp: String)
-
-
-object LoginsJsonProtocol extends DefaultJsonProtocol {
-  implicit val loginAttemptFormat = jsonFormat4(LoginAttemptMessage)
-  implicit val loginFailuresFormat = jsonFormat3(LoginFailuresMessage)
-}
 
 object FailedLoginsHandler {
   def main(args: Array[String]): Unit = {
@@ -56,25 +49,25 @@ object FailedLoginsHandler {
   }
 }
 
-class FailedLoginsHandler {
+class FailedLoginsHandler extends Serializable /*with LoginsJsonProtocol*/ {
+  @transient
   val conf = new SparkConf().setMaster("local[2]").setAppName("FailedLoginsHandler")
 
   val loginsTopic = "CustomerLogins"
   val failuresTopic = "ConsumerTopic"
   val consecutiveFailuresEventName = "Failed3ConsecutiveLogins"
 
-  val s3Bucket = "s3n://<myS3Credentials>@<bucketName>"
+  val s3Bucket = "mybucket"
 
   var lastValueFailure = false
 
   import LoginsJsonProtocol._
-  import spray.json._
   import FailedLoginsHandler._
 
   println("Starting application\n\n\n\n\n\n\n\n\n")
 
   def start(termination: Int = 0) {
-
+    @transient
     val ssc = createContext()
 
     ssc.start()
@@ -96,22 +89,23 @@ class FailedLoginsHandler {
     }
   }
 
-  def checkFailures(ssc: StreamingContext, message: LoginAttemptMessage, accumulator: Accumulator[Long]): Unit = {
-    val consecutiveFailures = accumulator.value
+  def checkFailures(message: LoginAttemptMessage, counter: Int): Unit = {
+    val consecutiveFailures = counter
     if (consecutiveFailures != 0 && consecutiveFailures % 2 == 0) {
-      sendFailuresMessage(ssc, message)
+      sendFailuresMessage(message)
     }
   }
 
-  def sendFailuresMessage(ssc: StreamingContext, message: LoginAttemptMessage): Unit = {
+  def sendFailuresMessage(message: LoginAttemptMessage): Unit = {
     val failureMessageList: List[JsValue] = List(LoginFailuresMessage(message.CustomerId, consecutiveFailuresEventName, message.Timestamp).toJson)
-    val failureMessageRDD: RDD[JsValue] = ssc.sparkContext.parallelize(failureMessageList)
+    val failureMessageRDD: RDD[JsValue] = (new StreamingContext(conf, Seconds(3))).sparkContext.parallelize(failureMessageList)
     failureMessageRDD.writeToKafka(producerConfig, message => new ProducerRecord(failuresTopic, message))
   }
 
   def createContext(): StreamingContext = {
+    @transient
     val ssc = new StreamingContext(conf, Seconds(3))
-    val failedLoginsCounter = FailedLoginsCounter.getInstance(ssc.sparkContext)
+    var failedLoginsCounter = 0
 
     val kafkaInputStream: InputDStream[(String, String)] = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,
       kafkaParams(),
@@ -129,7 +123,7 @@ class FailedLoginsHandler {
             case true => if (lastValueFailure == false) lastValueFailure = true else failedLoginsCounter += 1
             case false => lastValueFailure = false
           }
-          checkFailures(ssc, message, failedLoginsCounter)
+          checkFailures(message, failedLoginsCounter)
       }})
 
     ssc.checkpoint(s3Bucket)
